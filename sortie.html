@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Sorting Algorithm Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #e8f0e9; /* Light green */
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #004d00; /* Dark green */
+            color: #d4af37; /* Gold */
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid #d4af37;
+        }
+        header h1 {
+            font-family: 'Times New Roman', serif;
+            margin: 0;
+            font-size: 2.5em;
+        }
+        nav {
+            margin-top: 10px;
+        }
+        nav a {
+            color: #d4af37;
+            text-decoration: none;
+            padding: 10px 15px;
+            font-family: 'Garamond', serif;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            flex: 1;
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+        }
+        .main {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+            border: 1px solid #d4af37;
+        }
+        .main h2 {
+            font-family: 'Garamond', serif;
+            color: #004d00; /* Dark green */
+        }
+        .main input, .main button, .main select {
+            font-family: 'Arial', sans-serif;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .main input, .main select {
+            width: 70%;
+            border: 1px solid #004d00; /* Dark green */
+        }
+        .main button {
+            background-color: #d4af37; /* Gold */
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .main button:hover {
+            background-color: #b09a56; /* Darker gold */
+        }
+        #chart-container {
+            width: 100%;
+            margin-top: 20px;
+        }
+        canvas {
+            border: 2px solid #004d00; /* Dark green */
+            border-radius: 4px;
+        }
+        footer {
+            background-color: #004d00; /* Dark green */
+            color: #d4af37; /* Gold */
+            text-align: center;
+            padding: 20px;
+            border-top: 5px solid #d4af37;
+        }
+        footer a {
+            color: #d4af37; /* Gold */
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        #numbers-list {
+            margin: 20px 0;
+            list-style-type: none;
+            padding: 0;
+        }
+        #numbers-list li {
+            background: #f0f0f0; /* Light gray */
+            border: 1px solid #ddd;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #numbers-list input {
+            border: none;
+            background: transparent;
+            width: 60px;
+            text-align: center;
+        }
+        #history {
+            margin-top: 20px;
+        }
+        #history ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #history li {
+            background: #e0e0e0; /* Light gray */
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        .dragging {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Advanced Sorting Algorithm Visualization</h1>
+        <nav>
+            <a href="#" id="homeLink">Home</a>
+            <a href="https://www.kanlayanee.ac.th/home/" target="_blank" id="algorithmsLink">KNEP&nbsp;&nbsp;</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="main" id="content">
+            <h2>Sort and Visualize</h2>
+            <p>Enter numbers one by one:</p>
+            <input type="number" id="numberInput" placeholder="Enter a number" aria-label="Number input">
+            <button onclick="addNumber()">Add Number</button>
+            <select id="sortAlgorithm" aria-label="Sorting Algorithm">
+                <option value="bubble">Bubble Sort</option>
+                <option value="quick">Quick Sort</option>
+                <option value="merge">Merge Sort</option>
+            </select>
+            <ul id="numbers-list" aria-live="polite"></ul>
+            <button onclick="sortAndVisualize()">Sort and Display Chart</button>
+            <div id="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+            <div id="history">
+                <h3>History</h3>
+                <ul id="history-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Win's Sorting Algorithms. All rights reserved.</p>
+        <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="sorting-visualization.js"></script>
+
+    <script>
+        let numbersArray = [];
+        let history = [];
+        let barChart = null;
+
+        function addNumber() {
+            const input = document.getElementById('numberInput');
+            const value = parseFloat(input.value);
+            if (!isNaN(value)) {
+                numbersArray.push(value);
+                updateList();
+                input.value = '';
+                input.focus();
+                updateHistory(`Added number: ${value}`);
+            } else {
+                alert('Please enter a valid number.');
+            }
+        }
+
+        function updateList() {
+            const list = document.getElementById('numbers-list');
+            list.innerHTML = '';
+            numbersArray.forEach((num, index) => {
+                const li = document.createElement('li');
+                const numberInput = document.createElement('input');
+                numberInput.type = 'number';
+                numberInput.value = num;
+                numberInput.addEventListener('change', () => {
+                    numbersArray[index] = parseFloat(numberInput.value);
+                    updateHistory(`Edited number at position ${index + 1}: ${numbersArray[index]}`);
+                    updateList();
+                });
+                li.appendChild(numberInput);
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = 'Remove';
+                removeBtn.addEventListener('click', () => {
+                    numbersArray.splice(index, 1);
+                    updateHistory(`Removed number at position ${index + 1}`);
+                    updateList();
+                });
+                li.appendChild(removeBtn);
+                li.draggable = true;
+                li.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', e.target.dataset.index);
+                    e.target.classList.add('dragging');
+                });
+                li.addEventListener('dragend', (e) => {
+                    e.target.classList.remove('dragging');
+                });
+                li.dataset.index = index;
+                list.appendChild(li);
+            });
+
+            // Enable drag-and-drop sorting
+            list.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const dragging = document.querySelector('.dragging');
+                const afterElement = getDragAfterElement(list, e.clientY);
+                if (afterElement == null) {
+                    list.appendChild(dragging);
+                } else {
+                    list.insertBefore(dragging, afterElement);
+                }
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('li:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function bubbleSort(arr) {
+            let len = arr.length;
+            for (let i = 0; i < len - 1; i++) {
+                for (let j = 0; j < len - 1 - i; j++) {
+                    if (arr[j] > arr[j + 1]) {
+                        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                    }
+                }
+            }
+            return arr;
+        }
+
+        function quickSort(arr) {
+            if (arr.length <= 1) return arr;
+            let pivot = arr[Math.floor(arr.length / 2)];
+            let left = arr.filter(x => x < pivot);
+            let right = arr.filter(x => x > pivot);
+            let middle = arr.filter(x => x === pivot);
+            return [...quickSort(left), ...middle, ...quickSort(right)];
+        }
+
+        function mergeSort(arr) {
+            if (arr.length <= 1) return arr;
+            const middle = Math.floor(arr.length / 2);
+            const left = arr.slice(0, middle);
+            const right = arr.slice(middle);
+            return merge(mergeSort(left), mergeSort(right));
+        }
+
+        function merge(left, right) {
+            let result = [];
+            while (left.length && right.length) {
+                if (left[0] < right[0]) {
+                    result.push(left.shift());
+                } else {
+                    result.push(right.shift());
+                }
+            }
+            return [...result, ...left, ...right];
+        }
+
+        function createChart(data) {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            const colors = ['#344e41', '#3a5a40', '#5c7650', '#a3b18a', '#dad7cd', '#3c6c37', '#f2e1c2', '#7f5000', '#f29c27', '#092926'];
+
+            if (barChart) {
+                barChart.data.labels = data.map((_, index) => `Item ${index + 1}`);
+                barChart.data.datasets[0].data = data;
+                barChart.data.datasets[0].backgroundColor = colors.slice(0, data.length);
+                barChart.update();
+            } else {
+                barChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map((_, index) => `Item ${index + 1}`),
+                        datasets: [{
+                            label: 'Sorted Numbers',
+                            data: data,
+                            backgroundColor: colors.slice(0, data.length),
+                            borderColor: '#003b6f', /* Navy blue */
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#003b6f' /* Navy blue */
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#003b6f' /* Navy blue */
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#003b6f' /* Navy blue */
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateHistory(action) {
+            history.push(action);
+            const historyList = document.getElementById('history-list');
+            const li = document.createElement('li');
+            li.textContent = action;
+            historyList.appendChild(li);
+        }
+
+        function sortAndVisualize() {
+            const algorithm = document.getElementById('sortAlgorithm').value;
+            let sortedArray;
+
+            switch (algorithm) {
+                case 'bubble':
+                    sortedArray = bubbleSort([...numbersArray]);
+                    break;
+                case 'quick':
+                    sortedArray = quickSort([...numbersArray]);
+                    break;
+                case 'merge':
+                    sortedArray = mergeSort([...numbersArray]);
+                    break;
+                default:
+                    alert('Unknown sorting algorithm.');
+                    return;
+            }
+
+            createChart(sortedArray);
+            updateHistory(`Sorted using ${algorithm} sort.`);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Sorted Numbers',
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: '#003b6f', /* Navy blue */
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#003b6f' /* Navy blue */
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#003b6f' /* Navy blue */
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#003b6f' /* Navy blue */
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        document.getElementById('homeLink').addEventListener('click', () => {
+            numbersArray = [];
+            document.getElementById('numbers-list').innerHTML = '';
+            if (barChart) {
+                barChart.data.labels = [];
+                barChart.data.datasets[0].data = [];
+                barChart.update();
+            }
+            history = [];
+            document.getElementById('history-list').innerHTML = '';
+        });
+
+        document.getElementById('algorithmsLink').addEventListener('click', () => {
+            if (numbersArray.length > 0) {
+                sortAndVisualize();
+            }
+        });
+    </script>
+</body>
+</html>
